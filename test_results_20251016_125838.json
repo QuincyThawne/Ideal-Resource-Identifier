@@ -1,0 +1,14 @@
+{
+    "test_metadata": {
+        "timestamp": "2025-10-16T12:57:56.084015",
+        "duration_per_image": 12,
+        "total_images_tested": 1,
+        "successful_tests": 0,
+        "failed_tests": 1
+    },
+    "results": {
+        "node:18": {
+            "error": "Test timed out"
+        }
+    }
+}

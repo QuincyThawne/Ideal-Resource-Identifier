@@ -1,0 +1,85 @@
+{
+    "test_metadata": {
+        "timestamp": "2025-10-16T12:29:28.262495",
+        "duration_per_image": 20,
+        "total_images_tested": 10,
+        "successful_tests": 4,
+        "failed_tests": 6
+    },
+    "results": {
+        "nginx:latest": {
+            "error": "Test timed out"
+        },
+        "httpd:latest": {
+            "image": "httpd:latest",
+            "duration_sec": 20,
+            "cpu_avg": 0.005152775557788377,
+            "cpu_peak": 0.009066002490660025,
+            "mem_avg_mb": 0.4189453125,
+            "mem_peak_mb": 0.4375,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Web Servers",
+            "description": "Apache HTTP Server"
+        },
+        "redis:latest": {
+            "image": "redis:latest",
+            "duration_sec": 20,
+            "cpu_avg": 0.5532636066123234,
+            "cpu_peak": 5.07531806615776,
+            "mem_avg_mb": 4.5412109375,
+            "mem_peak_mb": 4.71875,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Databases",
+            "description": "Redis Cache"
+        },
+        "postgres:latest": {
+            "error": "Test timed out"
+        },
+        "mysql:latest": {
+            "error": "Test timed out"
+        },
+        "python:3.11": {
+            "error": "Test timed out"
+        },
+        "node:18": {
+            "error": "Test timed out"
+        },
+        "openjdk:17": {
+            "error": "Test timed out"
+        },
+        "alpine:latest": {
+            "image": "alpine:latest",
+            "duration_sec": 20,
+            "cpu_avg": 0.0038033443442034146,
+            "cpu_peak": 0.007562189054726369,
+            "mem_avg_mb": 0.3546875,
+            "mem_peak_mb": 0.5625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Base Images",
+            "description": "Alpine Linux (Minimal)"
+        },
+        "ubuntu:latest": {
+            "image": "ubuntu:latest",
+            "duration_sec": 20,
+            "cpu_avg": 0.0038098513905634075,
+            "cpu_peak": 0.006384039900249376,
+            "mem_avg_mb": 0.4025390625,
+            "mem_peak_mb": 0.40625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Base Images",
+            "description": "Ubuntu Linux"
+        }
+    }
+}

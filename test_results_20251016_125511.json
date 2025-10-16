@@ -1,0 +1,129 @@
+{
+    "test_metadata": {
+        "timestamp": "2025-10-16T12:51:03.240558",
+        "duration_per_image": 12,
+        "total_images_tested": 10,
+        "successful_tests": 8,
+        "failed_tests": 2
+    },
+    "results": {
+        "nginx:latest": {
+            "image": "nginx:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.3260170744977655,
+            "cpu_peak": 3.910248756218906,
+            "mem_avg_mb": 7.336588541666667,
+            "mem_peak_mb": 8.0078125,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Web Servers",
+            "description": "Nginx Web Server"
+        },
+        "httpd:latest": {
+            "image": "httpd:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.004535445354697453,
+            "cpu_peak": 0.009318463444857497,
+            "mem_avg_mb": 6.655894886363637,
+            "mem_peak_mb": 6.8984375,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Web Servers",
+            "description": "Apache HTTP Server"
+        },
+        "redis:latest": {
+            "image": "redis:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.3289312214078767,
+            "cpu_peak": 0.4333748443337484,
+            "mem_avg_mb": 4.6455078125,
+            "mem_peak_mb": 4.8828125,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Databases",
+            "description": "Redis Cache"
+        },
+        "postgres:latest": {
+            "image": "postgres:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.0017557303219735163,
+            "cpu_peak": 0.0017557303219735163,
+            "mem_avg_mb": 2.01953125,
+            "mem_peak_mb": 2.01953125,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Databases",
+            "description": "PostgreSQL Database"
+        },
+        "mysql:latest": {
+            "error": "Test timed out"
+        },
+        "python:3.11": {
+            "image": "python:3.11",
+            "duration_sec": 12,
+            "cpu_avg": 0.0001035889339423316,
+            "cpu_peak": 0.0012430672073079792,
+            "mem_avg_mb": 0.4225260416666667,
+            "mem_peak_mb": 0.4296875,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Languages",
+            "description": "Python 3.11"
+        },
+        "node:18": {
+            "error": "Test timed out"
+        },
+        "openjdk:17": {
+            "image": "openjdk:17",
+            "duration_sec": 12,
+            "cpu_avg": 149.80415555558895,
+            "cpu_peak": 299.5946928746929,
+            "mem_avg_mb": 63.478515625,
+            "mem_peak_mb": 103.3046875,
+            "recommendation": {
+                "vcpu": 4,
+                "ram_gb": 0.15
+            },
+            "category": "Languages",
+            "description": "OpenJDK 17"
+        },
+        "alpine:latest": {
+            "image": "alpine:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.004530722114018023,
+            "cpu_peak": 0.0073,
+            "mem_avg_mb": 0.3639322916666667,
+            "mem_peak_mb": 0.58203125,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Base Images",
+            "description": "Alpine Linux (Minimal)"
+        },
+        "ubuntu:latest": {
+            "image": "ubuntu:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.005072053856941526,
+            "cpu_peak": 0.014164588528678305,
+            "mem_avg_mb": 0.4212239583333333,
+            "mem_peak_mb": 0.62890625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Base Images",
+            "description": "Ubuntu Linux"
+        }
+    }
+}

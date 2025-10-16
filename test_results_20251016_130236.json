@@ -1,0 +1,141 @@
+{
+    "test_metadata": {
+        "timestamp": "2025-10-16T12:59:30.166587",
+        "duration_per_image": 12,
+        "total_images_tested": 10,
+        "successful_tests": 9,
+        "failed_tests": 1
+    },
+    "results": {
+        "nginx:latest": {
+            "image": "nginx:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.0004327896034913039,
+            "cpu_peak": 0.004760685638404343,
+            "mem_avg_mb": 7.675426136363637,
+            "mem_peak_mb": 7.7890625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Web Servers",
+            "description": "Nginx Web Server"
+        },
+        "httpd:latest": {
+            "image": "httpd:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.005360811052841608,
+            "cpu_peak": 0.009394313967861558,
+            "mem_avg_mb": 6.6279296875,
+            "mem_peak_mb": 6.66015625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Web Servers",
+            "description": "Apache HTTP Server"
+        },
+        "redis:latest": {
+            "image": "redis:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.570528943351414,
+            "cpu_peak": 2.9956662515566626,
+            "mem_avg_mb": 4.5390625,
+            "mem_peak_mb": 5.1953125,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Databases",
+            "description": "Redis Cache"
+        },
+        "postgres:latest": {
+            "error": "Process failed",
+            "returncode": 1
+        },
+        "mysql:latest": {
+            "image": "mysql:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.0048134331358694075,
+            "cpu_peak": 0.007562189054726369,
+            "mem_avg_mb": 0.5618489583333334,
+            "mem_peak_mb": 0.81640625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Databases",
+            "description": "MySQL Database"
+        },
+        "python:3.11": {
+            "image": "python:3.11",
+            "duration_sec": 12,
+            "cpu_avg": 9.278822536512694e-05,
+            "cpu_peak": 0.0011134587043815233,
+            "mem_avg_mb": 0.4290364583333333,
+            "mem_peak_mb": 0.453125,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Languages",
+            "description": "Python 3.11"
+        },
+        "node:18": {
+            "image": "node:18",
+            "duration_sec": 12,
+            "cpu_avg": 0.00010338460815395584,
+            "cpu_peak": 0.0011372306896935142,
+            "mem_avg_mb": 0.40589488636363635,
+            "mem_peak_mb": 0.421875,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Languages",
+            "description": "Node.js 18"
+        },
+        "openjdk:17": {
+            "image": "openjdk:17",
+            "duration_sec": 12,
+            "cpu_avg": 116.86414334388965,
+            "cpu_peak": 233.72611180124224,
+            "mem_avg_mb": 58.58984375,
+            "mem_peak_mb": 109.59375,
+            "recommendation": {
+                "vcpu": 3,
+                "ram_gb": 0.16
+            },
+            "category": "Languages",
+            "description": "OpenJDK 17"
+        },
+        "alpine:latest": {
+            "image": "alpine:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.0048454827125537225,
+            "cpu_peak": 0.012208436724565756,
+            "mem_avg_mb": 0.341796875,
+            "mem_peak_mb": 0.3515625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Base Images",
+            "description": "Alpine Linux (Minimal)"
+        },
+        "ubuntu:latest": {
+            "image": "ubuntu:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.004380561312241431,
+            "cpu_peak": 0.008337468982630273,
+            "mem_avg_mb": 0.419921875,
+            "mem_peak_mb": 0.4375,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Base Images",
+            "description": "Ubuntu Linux"
+        }
+    }
+}

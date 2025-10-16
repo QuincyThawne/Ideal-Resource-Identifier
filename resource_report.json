@@ -1,0 +1,12 @@
+{
+    "image": "ubuntu:latest",
+    "duration_sec": 12,
+    "cpu_avg": 0.01206367780459977,
+    "cpu_peak": 0.03861042183622829,
+    "mem_avg_mb": 0.4083806818181818,
+    "mem_peak_mb": 0.41796875,
+    "recommendation": {
+        "vcpu": 1,
+        "ram_gb": 0.0
+    }
+}

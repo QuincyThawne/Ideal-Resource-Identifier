@@ -1,0 +1,56 @@
+{
+    "test_metadata": {
+        "timestamp": "2025-10-16T12:47:21.877550",
+        "duration_per_image": 12,
+        "total_images_tested": 4,
+        "successful_tests": 3,
+        "failed_tests": 1
+    },
+    "results": {
+        "nginx:latest": {
+            "image": "nginx:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.36087780001425424,
+            "cpu_peak": 4.328282828282829,
+            "mem_avg_mb": 7.274739583333333,
+            "mem_peak_mb": 7.66015625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Web Servers",
+            "description": "Nginx Web Server"
+        },
+        "redis:latest": {
+            "image": "redis:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.6495454960277466,
+            "cpu_peak": 3.97196405648267,
+            "mem_avg_mb": 4.387044270833333,
+            "mem_peak_mb": 4.6953125,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Databases",
+            "description": "Redis Cache"
+        },
+        "python:3.11": {
+            "error": "expected str, bytes or os.PathLike object, not list"
+        },
+        "alpine:latest": {
+            "image": "alpine:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.004367783801165365,
+            "cpu_peak": 0.006491885143570537,
+            "mem_avg_mb": 0.3561197916666667,
+            "mem_peak_mb": 0.40625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Base Images",
+            "description": "Alpine Linux (Minimal)"
+        }
+    }
+}

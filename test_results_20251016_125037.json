@@ -1,0 +1,67 @@
+{
+    "test_metadata": {
+        "timestamp": "2025-10-16T12:49:12.528821",
+        "duration_per_image": 12,
+        "total_images_tested": 4,
+        "successful_tests": 4,
+        "failed_tests": 0
+    },
+    "results": {
+        "nginx:latest": {
+            "image": "nginx:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.9529905900303028,
+            "cpu_peak": 11.430904392764859,
+            "mem_avg_mb": 7.120442708333333,
+            "mem_peak_mb": 7.640625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Web Servers",
+            "description": "Nginx Web Server"
+        },
+        "redis:latest": {
+            "image": "redis:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.7180942093337412,
+            "cpu_peak": 5.81832709113608,
+            "mem_avg_mb": 4.4619140625,
+            "mem_peak_mb": 5.1484375,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.01
+            },
+            "category": "Databases",
+            "description": "Redis Cache"
+        },
+        "python:3.11": {
+            "image": "python:3.11",
+            "duration_sec": 12,
+            "cpu_avg": 0.00016859457364251922,
+            "cpu_peak": 0.0020231348837102306,
+            "mem_avg_mb": 0.4446614583333333,
+            "mem_peak_mb": 0.49609375,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Languages",
+            "description": "Python 3.11"
+        },
+        "alpine:latest": {
+            "image": "alpine:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.003955954749092879,
+            "cpu_peak": 0.006483790523690774,
+            "mem_avg_mb": 0.3401692708333333,
+            "mem_peak_mb": 0.35546875,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Base Images",
+            "description": "Alpine Linux (Minimal)"
+        }
+    }
+}

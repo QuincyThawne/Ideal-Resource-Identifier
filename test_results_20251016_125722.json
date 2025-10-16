@@ -1,0 +1,25 @@
+{
+    "test_metadata": {
+        "timestamp": "2025-10-16T12:56:58.658267",
+        "duration_per_image": 12,
+        "total_images_tested": 1,
+        "successful_tests": 1,
+        "failed_tests": 0
+    },
+    "results": {
+        "mysql:latest": {
+            "image": "mysql:latest",
+            "duration_sec": 12,
+            "cpu_avg": 0.004654934590961353,
+            "cpu_peak": 0.006069651741293532,
+            "mem_avg_mb": 0.6324869791666666,
+            "mem_peak_mb": 1.31640625,
+            "recommendation": {
+                "vcpu": 1,
+                "ram_gb": 0.0
+            },
+            "category": "Databases",
+            "description": "MySQL Database"
+        }
+    }
+}
