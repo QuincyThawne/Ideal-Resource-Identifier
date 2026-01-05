@@ -37,6 +37,9 @@ test_progress = {
     'results': []
 }
 
+# Global variable to store live test containers
+live_containers = {}
+
 # Default test images configuration
 DEFAULT_TEST_IMAGES = [
     {"name": "nginx:latest", "command": "nginx -g 'daemon off;'", "description": "Nginx Web Server", "category": "Web Servers"},
@@ -398,6 +401,14 @@ HOME_TEMPLATE = """
                 <p>Test a specific Docker image of your choice. Enter any image name from Docker Hub.</p>
                 <p><strong>Estimated time:</strong> ~30 seconds</p>
                 <button class="btn">Test Custom Image</button>
+            </div>
+            
+            <div class="card" onclick="window.location.href='/live-test'">
+                <div class="card-icon">📡</div>
+                <h2>Live Monitoring</h2>
+                <p>Run a Docker container and monitor real-time CPU and memory usage with live updates.</p>
+                <p><strong>Duration:</strong> Until you stop it</p>
+                <button class="btn">Start Live Monitor</button>
             </div>
         </div>
         
@@ -942,6 +953,778 @@ SINGLE_TEST_TEMPLATE = """
 </html>
 """
 
+LIVE_TEST_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Monitoring - Docker Resource Estimator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+        
+        small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .stats-section {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .status-badge.running {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-badge.stopped {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .container-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .container-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .info-value {
+            color: #333;
+            font-family: monospace;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .metric-label {
+            font-size: 1em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-sub {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .chart-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .chart {
+            height: 200px;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-line {
+            stroke: #667eea;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        .chart-area {
+            fill: rgba(102, 126, 234, 0.1);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .history {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .history-item {
+            padding: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📡 Live Container Monitoring</h1>
+        
+        <div class="form-section" id="formSection">
+            <div class="form-group">
+                <label for="presetSelect">Quick Preset (optional):</label>
+                <select id="presetSelect" onchange="loadPreset()" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em;">
+                    <option value="">-- Select a preset or enter custom --</option>
+                    <option value="mobsf">MobSF - Mobile Security Framework (Port 8000)</option>
+                    <option value="nginx">Nginx Web Server (Port 80)</option>
+                    <option value="apache">Apache Web Server (Port 80)</option>
+                    <option value="redis">Redis Cache (Port 6379)</option>
+                    <option value="postgres">PostgreSQL Database (Port 5432)</option>
+                    <option value="mysql">MySQL Database (Port 3306)</option>
+                    <option value="mongo">MongoDB (Port 27017)</option>
+                    <option value="elasticsearch">Elasticsearch (Port 9200)</option>
+                </select>
+                <small>Select a preset to auto-fill image, command, and port settings</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="imageName">Docker Image Name:</label>
+                <input 
+                    type="text" 
+                    id="imageName" 
+                    placeholder="e.g., nginx:latest or opensecurity/mobile-security-framework-mobsf:latest" 
+                    value=""
+                >
+                <small>Enter any public Docker image from Docker Hub</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="command">Custom Command (optional):</label>
+                <input 
+                    type="text" 
+                    id="command" 
+                    placeholder="e.g., nginx -g 'daemon off;' or leave empty"
+                >
+                <small>Leave empty to use default keep-alive command</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="portMapping">Port Mapping (optional):</label>
+                <input 
+                    type="text" 
+                    id="portMapping" 
+                    placeholder="e.g., 8000:8000 or 80:8080"
+                >
+                <small>Map container ports to host (format: host_port:container_port)</small>
+            </div>
+            
+            <div id="presetInfo" style="display: none; background: #e8f4ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea;">
+                <strong>ℹ️ Preset Info:</strong>
+                <p id="presetInfoText" style="margin-top: 8px; color: #333;"></p>
+            </div>
+            
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+                <strong>⚠️ Troubleshooting Tips:</strong>
+                <ul style="margin-top: 8px; margin-left: 20px; color: #856404;">
+                    <li>Ensure Docker Desktop is running on Windows</li>
+                    <li>For MobSF: Wait 30-60 seconds after starting for service to be ready</li>
+                    <li>Check container logs below for startup errors</li>
+                    <li>If port is in use, change the host port (e.g., 8001:8000)</li>
+                    <li>Some containers need time to initialize - watch the logs!</li>
+                </ul>
+            </div>
+            
+            <button class="btn" id="startBtn" onclick="startLiveTest()">🚀 Start Container</button>
+        </div>
+        
+        <div class="stats-section" id="statsSection">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <span class="status-badge running" id="statusBadge">● Running</span>
+            </div>
+            
+            <div class="container-info">
+                <h3>Container Information</h3>
+                <div class="info-row">
+                    <span class="info-label">Image:</span>
+                    <span class="info-value" id="infoImage">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Container ID:</span>
+                    <span class="info-value" id="infoContainerId">-</span>
+                </div>
+                <div class="info-row" id="accessUrlRow" style="display: none;">
+                    <span class="info-label">Access URL:</span>
+                    <span class="info-value">
+                        <a href="" id="accessUrl" target="_blank" style="color: #667eea; text-decoration: underline;">Open in New Tab</a>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Running Time:</span>
+                    <span class="info-value" id="infoRuntime">0s</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Samples Collected:</span>
+                    <span class="info-value" id="infoSamples">0</span>
+                </div>
+            </div>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">CPU Usage</div>
+                    <div class="metric-value" id="cpuCurrent">0%</div>
+                    <div class="metric-sub">Peak: <span id="cpuPeak">0%</span> | Avg: <span id="cpuAvg">0%</span></div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Memory Usage</div>
+                    <div class="metric-value" id="memCurrent">0 MB</div>
+                    <div class="metric-sub">Peak: <span id="memPeak">0 MB</span> | Avg: <span id="memAvg">0 MB</span></div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>CPU Usage Over Time</h3>
+                <div class="chart" id="cpuChart">
+                    <svg width="100%" height="100%" id="cpuSvg"></svg>
+                </div>
+                <div class="history" id="cpuHistory"></div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Memory Usage Over Time</h3>
+                <div class="chart" id="memChart">
+                    <svg width="100%" height="100%" id="memSvg"></svg>
+                </div>
+                <div class="history" id="memHistory"></div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>📟 Container Output (Live Logs)</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9em; height: 300px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;" id="terminalOutput">
+                    <span style="color: #888;">Waiting for container output...</span>
+                </div>
+                <div style="margin-top: 10px; text-align: right;">
+                    <button onclick="clearTerminal()" style="background: #333; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Clear Output</button>
+                    <button onclick="toggleAutoScroll()" id="autoScrollBtn" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Auto-scroll: ON</button>
+                </div>
+            </div>
+            
+            <div id="recommendationSection" style="display: none; margin-top: 30px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px;">
+                    <h3 style="margin-bottom: 20px; font-size: 1.5em;">☁️ Recommended Cloud Instance</h3>
+                    
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 1.2em; margin-bottom: 15px;">
+                            <strong>Recommended Configuration:</strong>
+                        </div>
+                        <div style="font-size: 1.8em; font-weight: bold;">
+                            <span id="recVcpu">-</span> vCPU(s), <span id="recRam">-</span> GB RAM
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <strong>Test Summary:</strong>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                            <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 5px;">
+                                <div style="opacity: 0.9; font-size: 0.9em;">Peak CPU</div>
+                                <div style="font-size: 1.3em; font-weight: bold;" id="recCpuPeak">-</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 5px;">
+                                <div style="opacity: 0.9; font-size: 0.9em;">Peak Memory</div>
+                                <div style="font-size: 1.3em; font-weight: bold;" id="recMemPeak">-</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 5px;">
+                                <div style="opacity: 0.9; font-size: 0.9em;">Avg CPU</div>
+                                <div style="font-size: 1.3em; font-weight: bold;" id="recCpuAvg">-</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 5px;">
+                                <div style="opacity: 0.9; font-size: 0.9em;">Avg Memory</div>
+                                <div style="font-size: 1.3em; font-weight: bold;" id="recMemAvg">-</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; opacity: 0.9;">
+                            <span id="recSamples">-</span> samples collected over <span id="recDuration">-</span> seconds
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <strong style="font-size: 1.1em;">Cloud Provider Recommendations:</strong>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px;">
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">AWS</div>
+                                <div style="font-size: 1.2em; font-weight: bold;" id="recAws">-</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">Google Cloud</div>
+                                <div style="font-size: 1.2em; font-weight: bold;" id="recGcp">-</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">Azure</div>
+                                <div style="font-size: 1.2em; font-weight: bold;" id="recAzure">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn danger" id="stopBtn" onclick="stopLiveTest()">⏹️ Stop Container</button>
+        </div>
+        
+        <a href="/" class="back-btn">← Back to Home</a>
+    </div>
+    
+    <script>
+        let pollInterval;
+        let containerId;
+        let startTime;
+        let cpuData = [];
+        let memData = [];
+        let maxDataPoints = 60;
+        let autoScroll = true;
+        let lastLogLength = 0;
+        
+        const presets = {
+            mobsf: {
+                image: 'opensecurity/mobile-security-framework-mobsf:latest',
+                command: '',
+                port: '8000:8000',
+                info: 'MobSF (Mobile Security Framework) - An automated, all-in-one mobile application security assessment framework. Access at http://localhost:8000 with credentials mobsf/mobsf. Perfect for stress testing mobile app analysis workloads.'
+            },
+            nginx: {
+                image: 'nginx:latest',
+                command: "nginx -g 'daemon off;'",
+                port: '80:80',
+                info: 'Nginx - High-performance web server and reverse proxy. Access at http://localhost:80. Great for testing web serving performance.'
+            },
+            apache: {
+                image: 'httpd:latest',
+                command: 'httpd-foreground',
+                port: '80:80',
+                info: 'Apache HTTP Server - Popular open-source web server. Access at http://localhost:80.'
+            },
+            redis: {
+                image: 'redis:latest',
+                command: 'redis-server',
+                port: '6379:6379',
+                info: 'Redis - In-memory data structure store used as cache and message broker. Connect at localhost:6379.'
+            },
+            postgres: {
+                image: 'postgres:latest',
+                command: '',
+                port: '5432:5432',
+                info: 'PostgreSQL - Advanced open-source relational database. Connect at localhost:5432. Note: Set POSTGRES_PASSWORD env var for production.'
+            },
+            mysql: {
+                image: 'mysql:latest',
+                command: '',
+                port: '3306:3306',
+                info: 'MySQL - Popular open-source relational database. Connect at localhost:3306. Note: Set MYSQL_ROOT_PASSWORD env var for production.'
+            },
+            mongo: {
+                image: 'mongo:latest',
+                command: '',
+                port: '27017:27017',
+                info: 'MongoDB - NoSQL document database. Connect at localhost:27017.'
+            },
+            elasticsearch: {
+                image: 'elasticsearch:8.11.0',
+                command: '',
+                port: '9200:9200',
+                info: 'Elasticsearch - Distributed search and analytics engine. Access at http://localhost:9200.'
+            }
+        };
+        
+        function loadPreset() {
+            const select = document.getElementById('presetSelect');
+            const presetKey = select.value;
+            
+            if (!presetKey) {
+                document.getElementById('presetInfo').style.display = 'none';
+                return;
+            }
+            
+            const preset = presets[presetKey];
+            document.getElementById('imageName').value = preset.image;
+            document.getElementById('command').value = preset.command;
+            document.getElementById('portMapping').value = preset.port;
+            document.getElementById('presetInfoText').textContent = preset.info;
+            document.getElementById('presetInfo').style.display = 'block';
+        }
+        
+        function startLiveTest() {
+            const imageName = document.getElementById('imageName').value;
+            const command = document.getElementById('command').value;
+            const portMapping = document.getElementById('portMapping').value;
+            const startBtn = document.getElementById('startBtn');
+            const formSection = document.getElementById('formSection');
+            const statsSection = document.getElementById('statsSection');
+            
+            if (!imageName) {
+                alert('Please enter an image name');
+                return;
+            }
+            
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; border-width: 3px; margin: 0 auto;"></div>';
+            
+            fetch('/api/start-live-test', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    image: imageName,
+                    command: command || null,
+                    port_mapping: portMapping || null
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    containerId = data.container_id;
+                    startTime = Date.now();
+                    cpuData = [];
+                    memData = [];
+                    lastLogLength = 0;
+                    
+                    document.getElementById('infoImage').textContent = imageName;
+                    document.getElementById('infoContainerId').textContent = containerId.substring(0, 12);
+                    
+                    // Show port mapping and access URL if available
+                    if (data.port_info) {
+                        document.getElementById('infoImage').textContent = imageName + ' ' + data.port_info;
+                        
+                        // Extract port and create clickable link
+                        const portMatch = portMapping.match(/^(\d+):/);
+                        if (portMatch) {
+                            const port = portMatch[1];
+                            const url = `http://localhost:${port}`;
+                            document.getElementById('accessUrl').href = url;
+                            document.getElementById('accessUrl').textContent = url;
+                            document.getElementById('accessUrlRow').style.display = 'flex';
+                        }
+                    }
+                    
+                    formSection.style.display = 'none';
+                    statsSection.style.display = 'block';
+                    
+                    pollInterval = setInterval(pollStats, 1000);
+                } else {
+                    alert('Failed to start container: ' + (data.error || 'Unknown error'));
+                    startBtn.disabled = false;
+                    startBtn.textContent = '🚀 Start Container';
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+                startBtn.disabled = false;
+                startBtn.textContent = '🚀 Start Container';
+            });
+        }
+        
+        function pollStats() {
+            if (!containerId) return;
+            
+            fetch('/api/live-test-stats?container_id=' + containerId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') {
+                        clearInterval(pollInterval);
+                        document.getElementById('statusBadge').className = 'status-badge stopped';
+                        document.getElementById('statusBadge').textContent = '● Stopped';
+                        alert('Container stopped: ' + data.error);
+                        return;
+                    }
+                    
+                    // Update runtime
+                    const runtime = Math.floor((Date.now() - startTime) / 1000);
+                    document.getElementById('infoRuntime').textContent = runtime + 's';
+                    document.getElementById('infoSamples').textContent = data.samples;
+                    
+                    // Update CPU
+                    document.getElementById('cpuCurrent').textContent = data.cpu_current.toFixed(2) + '%';
+                    document.getElementById('cpuPeak').textContent = data.cpu_peak.toFixed(2) + '%';
+                    document.getElementById('cpuAvg').textContent = data.cpu_avg.toFixed(2) + '%';
+                    
+                    // Update Memory
+                    document.getElementById('memCurrent').textContent = data.mem_current.toFixed(2) + ' MB';
+                    document.getElementById('memPeak').textContent = data.mem_peak.toFixed(2) + ' MB';
+                    document.getElementById('memAvg').textContent = data.mem_avg.toFixed(2) + ' MB';
+                    
+                    // Store data
+                    cpuData.push(data.cpu_current);
+                    memData.push(data.mem_current);
+                    
+                    if (cpuData.length > maxDataPoints) {
+                        cpuData.shift();
+                        memData.shift();
+                    }
+                    
+                    // Update charts
+                    updateChart('cpuSvg', cpuData, 100, '#667eea');
+                    updateChart('memSvg', memData, Math.max(...memData) * 1.2, '#764ba2');
+                    
+                    // Update history
+                    updateHistory('cpuHistory', cpuData.slice(-5), '%');
+                    updateHistory('memHistory', memData.slice(-5), ' MB');
+                    
+                    // Update terminal output
+                    if (data.logs && data.logs.length > lastLogLength) {
+                        const terminalOutput = document.getElementById('terminalOutput');
+                        if (lastLogLength === 0) {
+                            terminalOutput.innerHTML = '';
+                        }
+                        terminalOutput.textContent = data.logs;
+                        lastLogLength = data.logs.length;
+                        
+                        if (autoScroll) {
+                            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                        }
+                    }
+                });
+        }
+        
+        function clearTerminal() {
+            document.getElementById('terminalOutput').innerHTML = '<span style="color: #888;">Terminal cleared. New output will appear here...</span>';
+            lastLogLength = 0;
+        }
+        
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            const btn = document.getElementById('autoScrollBtn');
+            btn.textContent = 'Auto-scroll: ' + (autoScroll ? 'ON' : 'OFF');
+            btn.style.background = autoScroll ? '#667eea' : '#666';
+        }
+        
+        function updateChart(svgId, data, maxVal, color) {
+            const svg = document.getElementById(svgId);
+            const width = svg.clientWidth;
+            const height = svg.clientHeight;
+            
+            if (data.length < 2) return;
+            
+            const xStep = width / (maxDataPoints - 1);
+            const yScale = height / maxVal;
+            
+            let pathData = 'M 0 ' + (height - data[0] * yScale);
+            for (let i = 1; i < data.length; i++) {
+                const x = i * xStep;
+                const y = height - data[i] * yScale;
+                pathData += ' L ' + x + ' ' + y;
+            }
+            
+            let areaData = pathData + ' L ' + ((data.length - 1) * xStep) + ' ' + height + ' L 0 ' + height + ' Z';
+            
+            svg.innerHTML = `
+                <path d="${areaData}" fill="${color}" opacity="0.2"/>
+                <path d="${pathData}" stroke="${color}" stroke-width="2" fill="none"/>
+            `;
+        }
+        
+        function updateHistory(elementId, data, unit) {
+            const element = document.getElementById(elementId);
+            const reversed = data.slice().reverse();
+            element.innerHTML = reversed.map((val, idx) => 
+                `<div class="history-item">
+                    <span>${reversed.length - idx} sample(s) ago:</span>
+                    <span><strong>${val.toFixed(2)}${unit}</strong></span>
+                </div>`
+            ).join('');
+        }
+        
+        function stopLiveTest() {
+            if (!containerId) return;
+            
+            if (!confirm('Are you sure you want to stop the container?')) {
+                return;
+            }
+            
+            clearInterval(pollInterval);
+            
+            fetch('/api/stop-live-test', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({container_id: containerId})
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('statusBadge').className = 'status-badge stopped';
+                document.getElementById('statusBadge').textContent = '● Stopped';
+                document.getElementById('stopBtn').disabled = true;
+                
+                // Display recommendations if available
+                if (data.recommendations) {
+                    const rec = data.recommendations;
+                    const stats = rec.stats;
+                    
+                    document.getElementById('recVcpu').textContent = rec.vcpu;
+                    document.getElementById('recRam').textContent = rec.ram_gb;
+                    document.getElementById('recCpuPeak').textContent = stats.cpu_peak + '%';
+                    document.getElementById('recMemPeak').textContent = stats.mem_peak_mb.toFixed(2) + ' MB';
+                    document.getElementById('recCpuAvg').textContent = stats.cpu_avg + '%';
+                    document.getElementById('recMemAvg').textContent = stats.mem_avg_mb.toFixed(2) + ' MB';
+                    document.getElementById('recSamples').textContent = stats.samples;
+                    document.getElementById('recDuration').textContent = stats.duration_sec;
+                    document.getElementById('recAws').textContent = rec.instances.aws;
+                    document.getElementById('recGcp').textContent = rec.instances.gcp;
+                    document.getElementById('recAzure').textContent = rec.instances.azure;
+                    
+                    document.getElementById('recommendationSection').style.display = 'block';
+                    
+                    // Scroll to recommendations
+                    document.getElementById('recommendationSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                
+                alert('Container stopped successfully! See recommendations below.');
+            })
+            .catch(error => {
+                alert('Error stopping container: ' + error);
+            });
+        }
+    </script>
+</body>
+</html>
+"""
+
 RESULTS_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -1314,6 +2097,11 @@ def single_test():
     return render_template_string(SINGLE_TEST_TEMPLATE)
 
 
+@app.route('/live-test')
+def live_test():
+    return render_template_string(LIVE_TEST_TEMPLATE)
+
+
 @app.route('/api/start-bulk-test', methods=['POST'])
 def api_start_bulk_test():
     data = request.json
@@ -1348,6 +2136,256 @@ def api_start_single_test():
         return jsonify({'status': 'error', 'error': result['error']})
     
     return jsonify({'status': 'success'})
+
+
+@app.route('/api/start-live-test', methods=['POST'])
+def api_start_live_test():
+    """Start a container for live monitoring."""
+    global live_containers
+    
+    data = request.json
+    image_name = data.get('image')
+    custom_command = data.get('command')
+    port_mapping = data.get('port_mapping')
+    
+    try:
+        client = docker.from_env()
+        
+        # Check/pull image
+        try:
+            image = client.images.get(image_name)
+        except docker.errors.ImageNotFound:
+            try:
+                image = client.images.pull(image_name)
+            except docker.errors.APIError as e:
+                return jsonify({'status': 'error', 'error': f'Failed to pull image: {str(e)}'})
+        
+        # Parse port mapping
+        ports = None
+        port_info = None
+        if port_mapping:
+            try:
+                host_port, container_port = port_mapping.split(':')
+                # Bind to all interfaces (0.0.0.0) to ensure accessibility
+                ports = {f'{container_port}/tcp': ('0.0.0.0', int(host_port))}
+                port_info = f'(Port {host_port} → {container_port})'
+            except:
+                return jsonify({'status': 'error', 'error': 'Invalid port mapping format. Use host_port:container_port'})
+        
+        # Start container with proper flags
+        container = None
+        try:
+            # Use stdin_open and tty for interactive containers (like MobSF)
+            # Set network_mode to bridge for proper port exposure
+            container_args = {
+                'detach': True,
+                'stdin_open': True,
+                'tty': True,
+                'ports': ports,
+                'network_mode': 'bridge'
+            }
+            
+            # Only add command if specified, let container use default CMD otherwise
+            if custom_command:
+                container_args['command'] = custom_command
+            
+            container = client.containers.run(image_name, **container_args)
+        except docker.errors.APIError as e:
+            # Try fallback commands only if custom command wasn't specified
+            if "executable file not found" in str(e) and not custom_command:
+                try:
+                    container_args['command'] = "sleep infinity"
+                    container = client.containers.run(image_name, **container_args)
+                except:
+                    try:
+                        # Try without any command
+                        container_args.pop('command', None)
+                        container = client.containers.run(image_name, **container_args)
+                    except Exception as final_e:
+                        return jsonify({'status': 'error', 'error': f'Failed to start container: {str(final_e)}'})
+            else:
+                return jsonify({'status': 'error', 'error': f'Failed to start container: {str(e)}'})
+        
+        # Wait a moment for container to fully start
+        time.sleep(2)
+        
+        # Verify container is running and get port info
+        try:
+            container.reload()
+            if container.status != 'running':
+                return jsonify({'status': 'error', 'error': f'Container started but not running. Status: {container.status}'})
+            
+            # Get actual port bindings
+            port_bindings = container.attrs.get('NetworkSettings', {}).get('Ports', {})
+            if ports and port_bindings:
+                port_info_detailed = f'{port_info} - Access at http://localhost:{host_port}'
+            else:
+                port_info_detailed = port_info
+        except Exception as e:
+            port_info_detailed = port_info
+        
+        # Store container info
+        container_id = container.id
+        live_containers[container_id] = {
+            'container': container,
+            'image': image_name,
+            'start_time': time.time(),
+            'cpu_history': [],
+            'mem_history': [],
+            'samples': 0,
+            'logs': ''
+        }
+        
+        return jsonify({
+            'status': 'success',
+            'container_id': container_id,
+            'port_info': port_info_detailed
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)})
+
+
+@app.route('/api/live-test-stats')
+def api_live_test_stats():
+    """Get current stats for a running container."""
+    global live_containers
+    
+    container_id = request.args.get('container_id')
+    
+    if container_id not in live_containers:
+        return jsonify({'status': 'error', 'error': 'Container not found'})
+    
+    container_info = live_containers[container_id]
+    container = container_info['container']
+    
+    try:
+        # Check if container is still running
+        container.reload()
+        if container.status != 'running':
+            return jsonify({'status': 'error', 'error': 'Container is not running'})
+        
+        # Get stats (non-streaming)
+        stats = container.stats(stream=False)
+        
+        # CPU calculation
+        cpu_stats = stats.get("cpu_stats", {})
+        precpu_stats = stats.get("precpu_stats", {})
+        
+        cpu_total = cpu_stats.get("cpu_usage", {}).get("total_usage", 0)
+        precpu_total = precpu_stats.get("cpu_usage", {}).get("total_usage", 0)
+        
+        system_cpu = cpu_stats.get("system_cpu_usage", 0)
+        presystem_cpu = precpu_stats.get("system_cpu_usage", 0)
+        
+        cpu_delta = cpu_total - precpu_total
+        system_delta = system_cpu - presystem_cpu
+        
+        online_cpus = cpu_stats.get("online_cpus")
+        if not online_cpus:
+            percpu_usage = cpu_stats.get("cpu_usage", {}).get("percpu_usage", [])
+            online_cpus = len(percpu_usage) if percpu_usage else 1
+        
+        cpu_percent = 0
+        if system_delta > 0 and cpu_delta >= 0:
+            cpu_percent = (cpu_delta / system_delta) * online_cpus * 100.0
+        
+        # Memory
+        mem_usage = stats.get("memory_stats", {}).get("usage", 0) / (1024 ** 2)
+        
+        # Update history
+        container_info['cpu_history'].append(cpu_percent)
+        container_info['mem_history'].append(mem_usage)
+        container_info['samples'] += 1
+        
+        # Calculate stats
+        cpu_avg = statistics.mean(container_info['cpu_history']) if container_info['cpu_history'] else 0
+        cpu_peak = max(container_info['cpu_history']) if container_info['cpu_history'] else 0
+        mem_avg = statistics.mean(container_info['mem_history']) if container_info['mem_history'] else 0
+        mem_peak = max(container_info['mem_history']) if container_info['mem_history'] else 0
+        
+        # Get container logs (last 500 lines to avoid overload)
+        try:
+            logs = container.logs(tail=500).decode('utf-8', errors='replace')
+            container_info['logs'] = logs
+        except:
+            logs = container_info['logs']
+        
+        return jsonify({
+            'status': 'success',
+            'cpu_current': cpu_percent,
+            'cpu_avg': cpu_avg,
+            'cpu_peak': cpu_peak,
+            'mem_current': mem_usage,
+            'mem_avg': mem_avg,
+            'mem_peak': mem_peak,
+            'samples': container_info['samples'],
+            'runtime': time.time() - container_info['start_time'],
+            'logs': logs
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)})
+
+
+@app.route('/api/stop-live-test', methods=['POST'])
+def api_stop_live_test():
+    """Stop and remove a live test container."""
+    global live_containers
+    
+    data = request.json
+    container_id = data.get('container_id')
+    
+    if container_id not in live_containers:
+        return jsonify({'status': 'error', 'error': 'Container not found'})
+    
+    container_info = live_containers[container_id]
+    container = container_info['container']
+    
+    try:
+        # Calculate recommendations before stopping
+        cpu_history = container_info['cpu_history']
+        mem_history = container_info['mem_history']
+        
+        recommendations = None
+        if cpu_history and mem_history:
+            cpu_avg = statistics.mean(cpu_history)
+            cpu_peak = max(cpu_history)
+            mem_avg = statistics.mean(mem_history)
+            mem_peak = max(mem_history)
+            
+            # Calculate recommended resources
+            recommended_vcpu = max(1, round(cpu_peak / 80))
+            recommended_ram = round(mem_peak * 1.5 / 1024, 2)
+            
+            # Get instance recommendations
+            instances = get_instance_recommendations(recommended_vcpu, recommended_ram)
+            
+            recommendations = {
+                'vcpu': recommended_vcpu,
+                'ram_gb': recommended_ram,
+                'instances': instances,
+                'stats': {
+                    'cpu_avg': round(cpu_avg, 2),
+                    'cpu_peak': round(cpu_peak, 2),
+                    'mem_avg_mb': round(mem_avg, 2),
+                    'mem_peak_mb': round(mem_peak, 2),
+                    'samples': container_info['samples'],
+                    'duration_sec': round(time.time() - container_info['start_time'])
+                }
+            }
+        
+        container.stop()
+        container.remove()
+        del live_containers[container_id]
+        
+        return jsonify({
+            'status': 'success',
+            'recommendations': recommendations
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)})
 
 
 @app.route('/results')
